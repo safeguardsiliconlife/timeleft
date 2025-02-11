@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Digital Clock</title>
+    <!-- Include Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Reset default styles and set box-sizing */
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            box-sizing: border-box;
+        }
+        *, *::before, *::after {
+            box-sizing: inherit;
+        }
+
+        body {
+            background: linear-gradient(45deg, #000, #111, #000);
+            background-size: 400% 400%;
+            animation: backgroundAnimation 10s ease infinite;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 5%;
+        }
+
+        @keyframes backgroundAnimation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .clock {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 28vmin; /* Use viewport minimum units */
+            text-align: center;
+            color: #0f0;
+            text-shadow: 0 0 20px currentColor, 0 0 30px currentColor, 0 0 40px currentColor;
+            animation: colorChange 2s infinite alternate, glow 1s ease-in-out infinite alternate;
+            max-width: 100%;
+            overflow-wrap: break-word;
+        }
+
+        .stopwatch {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14vmin;
+            text-align: center;
+            color: #555;
+            text-shadow: 0 0 10px currentColor;
+            max-width: 100%;
+            overflow-wrap: break-word;
+            margin-top: 20px;
+        }
+
+        @keyframes colorChange {
+            0%, 100% {
+                color: #0f0; /* Green */
+            }
+            50% {
+                color: #f00; /* Red */
+            }
+        }
+
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor;
+            }
+            to {
+                text-shadow: 0 0 20px currentColor, 0 0 30px currentColor, 0 0 40px currentColor;
+            }
+        }
+
+        .buttons {
+            margin-top: 20px;
+        }
+
+        .buttons button {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2vmin;
+            margin: 0 10px;
+            padding: 10px 20px;
+            color: #0f0;
+            background: #111;
+            border: 2px solid #0f0;
+            cursor: pointer;
+            text-shadow: 0 0 10px currentColor;
+        }
+
+        .buttons button:hover {
+            background: #0f0;
+            color: #111;
+        }
+    </style>
+</head>
+<body>
+    <!-- Add the switch view button -->
+    <button 
+        onclick="window.location.href='/visualize'" 
+        style="
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 16px;
+            padding: 10px 20px;
+            color: #0f0;
+            background: #111;
+            border: 2px solid #0f0;
+            cursor: pointer;
+            text-shadow: 0 0 10px currentColor;
+            z-index: 1000;
+        "
+        onmouseover="this.style.background='#0f0'; this.style.color='#111'"
+        onmouseout="this.style.background='#111'; this.style.color='#0f0'"
+    >
+        Switch to Timer View
+    </button>
+
+    <div class="clock" id="clock">00:00:00</div>
+    <div class="stopwatch" id="stopwatch" style="display: none;">00:00:00</div>
+    <div class="buttons">
+        <button id="startButton">Start</button>
+        <button id="stopButton" style="display: none;">Stop</button>
+        <button id="clearButton" style="display: none;">Clear</button>
+    </div>
+    <script>
+        function updateTime() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const s = String(now.getSeconds()).padStart(2, '0');
+            const timeString = `${h}:${m}:${s}`;
+            document.getElementById('clock').textContent = timeString;
+        }
+
+        setInterval(updateTime, 1000);
+        updateTime(); // Initial call
+
+        let stopwatchInterval;
+        let stopwatchTime = 0;
+
+        function startStopwatch() {
+            document.getElementById('stopwatch').style.display = 'block';
+            document.getElementById('startButton').style.display = 'none';
+            document.getElementById('stopButton').style.display = 'inline';
+            document.getElementById('clearButton').style.display = 'inline';
+
+            stopwatchInterval = setInterval(() => {
+                stopwatchTime++;
+                const h = String(Math.floor(stopwatchTime / 3600)).padStart(2, '0');
+                const m = String(Math.floor((stopwatchTime % 3600) / 60)).padStart(2, '0');
+                const s = String(stopwatchTime % 60).padStart(2, '0');
+                const timeString = `${h}:${m}:${s}`;
+                document.getElementById('stopwatch').textContent = timeString;
+            }, 1000);
+        }
+
+        function stopStopwatch() {
+            clearInterval(stopwatchInterval);
+            document.getElementById('startButton').style.display = 'inline';
+            document.getElementById('stopButton').style.display = 'none';
+        }
+
+        function clearStopwatch() {
+            clearInterval(stopwatchInterval);
+            stopwatchTime = 0;
+            document.getElementById('stopwatch').textContent = '00:00:00';
+            document.getElementById('stopwatch').style.display = 'none';
+            document.getElementById('startButton').style.display = 'inline';
+            document.getElementById('stopButton').style.display = 'none';
+            document.getElementById('clearButton').style.display = 'none';
+        }
+
+        document.getElementById('startButton').addEventListener('click', startStopwatch);
+        document.getElementById('stopButton').addEventListener('click', stopStopwatch);
+        document.getElementById('clearButton').addEventListener('click', clearStopwatch);
+    </script>
+</body>
+</html>

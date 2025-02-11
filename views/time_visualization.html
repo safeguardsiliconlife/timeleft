@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Time Quantity Visualization</title>
+  <style>
+      body {
+          margin: 0;
+          padding: 20px;
+          background: #1a1a1a;
+          color: #fff;
+          font-family: 'Arial', sans-serif;
+          min-height: 100vh;
+      }
+
+      .container {
+          max-width: 1200px;
+          margin: 0 auto;
+      }
+
+      .controls {
+          background: #2a2a2a;
+          padding: 20px;
+          border-radius: 10px;
+          margin: 20px 0;
+          display: flex;
+          gap: 15px;
+          flex-wrap: wrap;
+          align-items: center;
+      }
+
+      .quick-setup {
+          background: #2a2a2a;
+          padding: 20px;
+          border-radius: 10px;
+          margin: 20px 0;
+          display: flex;
+          gap: 15px;
+          flex-wrap: wrap;
+          align-items: center;
+      }
+
+      select, button, input {
+          background: #333;
+          border: 1px solid #444;
+          color: #fff;
+          padding: 10px 15px;
+          border-radius: 5px;
+          font-size: 16px;
+          outline: none;
+      }
+
+      button {
+          background: #4CAF50;
+          cursor: pointer;
+      }
+      button:hover {
+          background: #45a049;
+      }
+
+      .visualization-container {
+          background: #2a2a2a;
+          padding: 20px;
+          border-radius: 10px;
+          margin: 20px 0;
+      }
+
+      .title {
+          font-size: 24px;
+          margin-bottom: 20px;
+          text-align: center;
+      }
+
+      .time-remaining {
+          font-size: 20px;
+          text-align: center;
+          margin-bottom: 20px;
+          color: #4CAF50;
+      }
+
+      .time-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(20px, 1fr));
+          gap: 4px;
+          margin: 20px 0;
+      }
+
+      .time-unit {
+          aspect-ratio: 1;
+          border-radius: 4px;
+          transition: all 0.3s ease;
+          position: relative;
+      }
+
+      .time-unit.past {
+          background: #666;
+      }
+
+      .time-unit.current {
+          background: #4CAF50;
+          animation: pulse 2s infinite;
+      }
+
+      .time-unit.future {
+          background: #333;
+          border: 1px solid #444;
+      }
+
+      @keyframes pulse {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.1); }
+          100% { transform: scale(1); }
+      }
+
+      .tooltip {
+          position: absolute;
+          background: rgba(0, 0, 0, 0.9);
+          padding: 8px;
+          border-radius: 4px;
+          font-size: 14px;
+          pointer-events: none;
+          z-index: 1000;
+          display: none;
+      }
+
+      .stats {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 20px;
+          margin: 20px 0;
+      }
+
+      .stat-card {
+          background: #333;
+          padding: 20px;
+          border-radius: 10px;
+          text-align: center;
+      }
+
+      .stat-value {
+          font-size: 24px;
+          font-weight: bold;
+          margin: 10px 0;
+          color: #4CAF50;
+      }
+
+      .legend {
+          display: flex;
+          justify-content: center;
+          gap: 20px;
+          margin: 20px 0;
+      }
+
+      .legend-item {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+      }
+
+      .legend-color {
+          width: 16px;
+          height: 16px;
+          border-radius: 4px;
+      }
+
+      .zoom-controls {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+      }
+
+      .zoom-controls span {
+          min-width: 50px;
+          text-align: center;
+      }
+
+      .progress-bar {
+          height: 10px;
+          background: #333;
+          border-radius: 5px;
+          margin: 20px 0;
+          position: relative;
+          overflow: hidden;
+      }
+
+      .progress-fill {
+          height: 100%;
+          background: #4CAF50;
+          transition: width 0.3s ease;
+      }
+  </style>
+</head>
+<body>
+<div class="container">
+    <!-- Add the switch view button -->
+    <button 
+        onclick="window.location.href='/'" 
+        style="
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        "
+    >
+        Switch to Clock View
+    </button>
+    
+    <!-- Controls -->
+    <div class="controls">
+        <!-- Start Date/Time -->
+        <label for="startDate">Start:</label>
+        <input type="datetime-local" id="startDate" />
+
+        <!-- End Date/Time -->
+        <label for="endDate">End:</label>
+        <input type="datetime-local" id="endDate" />
+
+        <!-- Time Step -->
+        <label for="timeStepSelect">Time Unit:</label>
+        <select id="timeStepSelect">
+            <option value="minutes" selected>Minutes</option>
+            <option value="fiveMinutes">5 Minutes</option>
+            <option value="tenMinutes">10 Minutes</option>
+            <option value="hours">Hours</option>
+            <option value="days">Days</option>
+            <option value="weeks">Weeks</option>
+        </select>
+
+        <!-- Zoom Controls -->
+        <div class="zoom-controls">
+            <button onclick="adjustUnitsPerRow(-10)">-</button>
+            <span id="unitsPerRow">36</span> 
+            <button onclick="adjustUnitsPerRow(10)">+</button>
+        </div>
+
+        <!-- Update Button -->
+        <button onclick="updateVisualization()">Update</button>
+    </div>
+
+    <!-- Quick Setup -->
+    <div class="quick-setup">
+        <label>Quick Setup:</label>
+        <input type="number" id="quickValue" min="1" value="1" style="width: 80px"/>
+        <select id="quickUnit">
+            <option value="minutes">Minutes</option>
+            <option value="hours">Hours</option>
+            <option value="days">Days</option>
+        </select>
+        <button onclick="setQuickTime()">Set Time</button>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats">
+      <div class="stat-card">
+          <div>Total Units</div>
+          <div class="stat-value" id="totalUnits">0</div>
+      </div>
+      <div class="stat-card">
+          <div>Used Units</div>
+          <div class="stat-value" id="usedUnits">0</div>
+      </div>
+      <div class="stat-card">
+          <div>Remaining Units</div>
+          <div class="stat-value" id="remainingUnits">0</div>
+      </div>
+      <div class="stat-card">
+          <div>Progress</div>
+          <div class="stat-value" id="progress">0%</div>
+      </div>
+  </div>    
+
+    <!-- Visualization -->
+    <div class="visualization-container">
+        <div class="title">Time Quantity Visualization</div>
+        <div class="time-remaining" id="timeRemaining">Time remaining: calculating...</div>
+        <!-- Progress bar -->
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <!-- Legend -->
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: #666;"></div>
+                <span>Past</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #4CAF50;"></div>
+                <span>Current</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #333; border: 1px solid #444;"></div>
+                <span>Future</span>
+            </div>
+        </div>
+
+        <!-- Time Grid -->
+        <div class="time-grid" id="timeGrid"></div>
+        <div class="tooltip" id="tooltip"></div>
+    </div>
+
+
+</div>
+<script>
+    // Initialize settings object from localStorage or defaults
+    let settings = JSON.parse(localStorage.getItem('timeVisualizerSettings')) || {
+        unitsPerRow: 36,
+        startDate: null,
+        endDate: null,
+        unitType: 'minutes',
+        quickValue: 1,
+        quickUnit: 'minutes'
+    };
+
+    let unitsPerRow = settings.unitsPerRow;
+
+    // Initialize default start/end for demonstration
+    window.addEventListener('load', () => {
+        // Set default start & end times in your local timezone
+        let defaultStart = settings.startDate ? new Date(settings.startDate) : new Date();
+        let defaultEnd = settings.endDate ? new Date(settings.endDate) : new Date(defaultStart);
+        
+        if (!settings.endDate) {
+            defaultEnd.setDate(defaultEnd.getDate() + 1);
+        }
+
+        // Set the values in the form
+        document.getElementById('startDate').value = toLocalInputValue(defaultStart);
+        document.getElementById('endDate').value = toLocalInputValue(defaultEnd);
+        
+        if (settings.unitType) {
+            document.getElementById('timeStepSelect').value = settings.unitType;
+        }
+
+        // Set quick setup values from settings
+        document.getElementById('quickValue').value = settings.quickValue || 1;
+        document.getElementById('quickUnit').value = settings.quickUnit || 'minutes';
+
+        // Set initial unitsPerRow display
+        document.getElementById('unitsPerRow').textContent = unitsPerRow;
+        document.getElementById('timeGrid').style.gridTemplateColumns = 
+            `repeat(${unitsPerRow}, minmax(20px, 1fr))`;
+
+        updateVisualization();
+        // Optional: auto-refresh every X seconds
+        setInterval(updateVisualization, 1000); // update every second for countdown
+    });
+
+    function setQuickTime() {
+        const value = parseInt(document.getElementById('quickValue').value);
+        const unit = document.getElementById('quickUnit').value;
+        
+        // Save quick setup values to settings
+        settings.quickValue = value;
+        settings.quickUnit = unit;
+        localStorage.setItem('timeVisualizerSettings', JSON.stringify(settings));
+        
+        const now = new Date();
+        const end = new Date();
+        
+        switch(unit) {
+            case 'minutes':
+                end.setMinutes(end.getMinutes() + value);
+                break;
+            case 'hours':
+                end.setHours(end.getHours() + value);
+                break;
+            case 'days':
+                end.setDate(end.getDate() + value);
+                break;
+        }
+        
+        document.getElementById('startDate').value = toLocalInputValue(now);
+        document.getElementById('endDate').value = toLocalInputValue(end);
+        
+        updateVisualization();
+    }
+
+    function toLocalInputValue(date) {
+        // Formats a JS Date into yyyy-MM-ddTHH:mm string for datetime-local
+        const year = date.getFullYear();
+        const month = String(date.getMonth()+1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hour = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hour}:${minutes}`;
+    }
+
+    function adjustUnitsPerRow(change) {
+        unitsPerRow = Math.max(10, Math.min(200, unitsPerRow + change));
+        settings.unitsPerRow = unitsPerRow;
+        localStorage.setItem('timeVisualizerSettings', JSON.stringify(settings));
+        
+        document.getElementById('unitsPerRow').textContent = unitsPerRow;
+        // Update the grid's template columns
+        document.getElementById('timeGrid').style.gridTemplateColumns = 
+            `repeat(${unitsPerRow}, minmax(20px, 1fr))`;
+        updateVisualization();
+    }
+
+    function updateVisualization() {
+        const timeGrid = document.getElementById('timeGrid');
+        const tooltip = document.getElementById('tooltip');
+
+        // Read user inputs
+        let startDate = new Date(document.getElementById('startDate').value);
+        let endDate = new Date(document.getElementById('endDate').value);
+        let unitType = document.getElementById('timeStepSelect').value;
+        let now = new Date();
+
+        // Update settings object and save to localStorage
+        settings.startDate = startDate.toISOString();
+        settings.endDate = endDate.toISOString();
+        settings.unitType = unitType;
+        localStorage.setItem('timeVisualizerSettings', JSON.stringify(settings));
+
+        // Update time remaining display
+        let timeRemainingElement = document.getElementById('timeRemaining');
+        let remainingMs = endDate - now;
+        
+        if (remainingMs <= 0) {
+            timeRemainingElement.textContent = "Time's up!";
+        } else {
+            let days = Math.floor(remainingMs / (1000 * 60 * 60 * 24));
+            let hours = Math.floor((remainingMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            let minutes = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+            let seconds = Math.floor((remainingMs % (1000 * 60)) / 1000);
+
+            let timeString = "Time remaining: ";
+            if (days > 0) {
+                timeString += `${days} day${days > 1 ? 's' : ''} `;
+            }
+            if (hours > 0 || days > 0) {
+                timeString += `${hours} hour${hours > 1 ? 's' : ''} `;
+            }
+            if (minutes > 0 || hours > 0 || days > 0) {
+                timeString += `${minutes} minute${minutes > 1 ? 's' : ''} `;
+            }
+            timeString += `${seconds} second${seconds > 1 ? 's' : ''}`;
+            
+            timeRemainingElement.textContent = timeString;
+        }
+
+        // Sanity check: if start > end, just swap or handle gracefully
+        if (startDate > endDate) {
+            // Swap
+            [startDate, endDate] = [endDate, startDate];
+        }
+
+        // Determine time step in milliseconds
+        let stepMs = getStepMs(unitType);
+
+        // Calculate how many total units fit between startDate and endDate
+        let totalDurationMs = endDate - startDate;
+        // Number of steps (round up to include partial)
+        let totalUnits = Math.ceil(totalDurationMs / stepMs);
+
+        // Clear old grid
+        timeGrid.innerHTML = '';
+        // Ensure grid columns match the current unitsPerRow
+        timeGrid.style.gridTemplateColumns = `repeat(${unitsPerRow}, minmax(20px, 1fr))`;
+
+        let usedCount = 0;
+
+        // Create each unit cell
+        for (let i = 0; i < totalUnits; i++) {
+            let unitStartTime = new Date(startDate.getTime() + i * stepMs);
+            let unitEndTime = new Date(unitStartTime.getTime() + stepMs);
+
+            // Create a box
+            let div = document.createElement('div');
+            div.className = 'time-unit';
+
+            // Determine past/current/future
+            if (now >= unitEndTime) {
+                // It's entirely in the past
+                div.classList.add('past');
+                usedCount++;
+            } else if (now < unitStartTime) {
+                // It's entirely in the future
+                div.classList.add('future');
+            } else {
+                // Now is between unitStartTime and unitEndTime
+                div.classList.add('current');
+                // We can consider it partially used
+            }
+
+            // Tooltip
+            div.addEventListener('mouseover', (e) => {
+                tooltip.style.display = 'block';
+                tooltip.style.left = e.pageX + 10 + 'px';
+                tooltip.style.top = e.pageY + 10 + 'px';
+                tooltip.textContent = formatTooltip(unitStartTime, unitEndTime, unitType);
+            });
+            div.addEventListener('mousemove', (e) => {
+                tooltip.style.left = e.pageX + 10 + 'px';
+                tooltip.style.top = e.pageY + 10 + 'px';
+            });
+            div.addEventListener('mouseout', () => {
+                tooltip.style.display = 'none';
+            });
+
+            timeGrid.appendChild(div);
+        }
+
+        // Update stats & progress
+        let remaining = totalUnits - usedCount; 
+        let progressPercent = totalUnits > 0 
+            ? (usedCount / totalUnits) * 100 
+            : 0;
+
+        document.getElementById('totalUnits').textContent = totalUnits;
+        document.getElementById('usedUnits').textContent = usedCount;
+        document.getElementById('remainingUnits').textContent = remaining;
+        document.getElementById('progress').textContent = progressPercent.toFixed(1) + '%';
+        document.getElementById('progressFill').style.width = progressPercent + '%';
+    }
+
+    // Returns the step size in milliseconds for the selected time unit
+    function getStepMs(unit) {
+        switch(unit) {
+            case 'minutes': return 60 * 1000; 
+            case 'fiveMinutes': return 5 * 60 * 1000; 
+            case 'tenMinutes': return 10 * 60 * 1000; 
+            case 'hours': return 60 * 60 * 1000; 
+            case 'days': return 24 * 60 * 60 * 1000; 
+            case 'weeks': return 7 * 24 * 60 * 60 * 1000; 
+            default: return 60 * 1000; // default minutes
+        }
+    }
+
+    // Show a friendly tooltip for each block
+    function formatTooltip(startTime, endTime, unitType) {
+        const options = { 
+            year: 'numeric', month: 'short', day: 'numeric',
+            hour: '2-digit', minute: '2-digit', second: '2-digit'
+        };
+        let startStr = startTime.toLocaleString([], options);
+        let endStr = endTime.toLocaleString([], options);
+        return `${unitType} block:\n${startStr} to ${endStr}`;
+    }
+</script>
+</body>
+</html>
