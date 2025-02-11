@@ -142,6 +142,55 @@
 
         let stopwatchInterval;
         let stopwatchTime = 0;
+        let startTimestamp = null;  // Add this to track when the stopwatch started
+
+        function saveStopwatchState() {
+            const state = {
+                time: stopwatchTime,
+                isRunning: !!stopwatchInterval,
+                startTime: new Date().getTime(),  // This is for expiration
+                display: document.getElementById('stopwatch').style.display,
+                startTimestamp: startTimestamp    // Save when the stopwatch started
+            };
+            localStorage.setItem('stopwatchState', JSON.stringify(state));
+        }
+
+        function loadStopwatchState() {
+            const savedState = localStorage.getItem('stopwatchState');
+            if (!savedState) return false;
+
+            const state = JSON.parse(savedState);
+            const now = new Date().getTime();
+
+            stopwatchTime = state.time;
+            startTimestamp = state.startTimestamp;
+            document.getElementById('stopwatch').style.display = state.display;
+            
+            // If it was running, calculate elapsed time since last save
+            if (state.isRunning && startTimestamp) {
+                const elapsedSinceLastSave = Math.floor((now - startTimestamp) / 1000);
+                stopwatchTime = elapsedSinceLastSave;
+            }
+
+            // Update display
+            const h = String(Math.floor(stopwatchTime / 3600)).padStart(2, '0');
+            const m = String(Math.floor((stopwatchTime % 3600) / 60)).padStart(2, '0');
+            const s = String(stopwatchTime % 60).padStart(2, '0');
+            document.getElementById('stopwatch').textContent = `${h}:${m}:${s}`;
+
+            // Update buttons
+            if (state.display === 'block') {
+                document.getElementById('clearButton').style.display = 'inline';
+                if (state.isRunning) {
+                    startStopwatch();
+                } else {
+                    document.getElementById('startButton').style.display = 'inline';
+                    document.getElementById('stopButton').style.display = 'none';
+                }
+            }
+
+            return true;
+        }
 
         function startStopwatch() {
             document.getElementById('stopwatch').style.display = 'block';
@@ -149,35 +198,50 @@
             document.getElementById('stopButton').style.display = 'inline';
             document.getElementById('clearButton').style.display = 'inline';
 
+            // Set or update the start timestamp
+            if (!startTimestamp) {
+                startTimestamp = new Date().getTime() - (stopwatchTime * 1000);
+            }
+
             stopwatchInterval = setInterval(() => {
-                stopwatchTime++;
+                const now = new Date().getTime();
+                stopwatchTime = Math.floor((now - startTimestamp) / 1000);
                 const h = String(Math.floor(stopwatchTime / 3600)).padStart(2, '0');
                 const m = String(Math.floor((stopwatchTime % 3600) / 60)).padStart(2, '0');
                 const s = String(stopwatchTime % 60).padStart(2, '0');
                 const timeString = `${h}:${m}:${s}`;
                 document.getElementById('stopwatch').textContent = timeString;
+                saveStopwatchState();
             }, 1000);
+            
+            saveStopwatchState();
         }
 
         function stopStopwatch() {
             clearInterval(stopwatchInterval);
             document.getElementById('startButton').style.display = 'inline';
             document.getElementById('stopButton').style.display = 'none';
+            saveStopwatchState();
         }
 
         function clearStopwatch() {
             clearInterval(stopwatchInterval);
             stopwatchTime = 0;
+            startTimestamp = null;  // Reset the start timestamp
             document.getElementById('stopwatch').textContent = '00:00:00';
             document.getElementById('stopwatch').style.display = 'none';
             document.getElementById('startButton').style.display = 'inline';
             document.getElementById('stopButton').style.display = 'none';
             document.getElementById('clearButton').style.display = 'none';
+            localStorage.removeItem('stopwatchState');
         }
 
         document.getElementById('startButton').addEventListener('click', startStopwatch);
         document.getElementById('stopButton').addEventListener('click', stopStopwatch);
         document.getElementById('clearButton').addEventListener('click', clearStopwatch);
+
+        // Load saved state when page loads
+        loadStopwatchState();
     </script>
 </body>
 </html>
