@@ -247,7 +247,7 @@
     <!-- Quick Setup -->
     <div class="quick-setup">
         <label>Quick Setup:</label>
-        <input type="number" id="quickValue" min="1" value="1" style="width: 80px"/>
+        <input type="number" id="quickValue" min="0.01" value="1" style="width: 80px"/>
         <select id="quickUnit">
             <option value="minutes">Minutes</option>
             <option value="hours">Hours</option>
@@ -363,17 +363,15 @@
         
         const now = new Date();
         const end = new Date();
-        
-        switch(unit) {
-            case 'minutes':
-                end.setMinutes(end.getMinutes() + value);
-                break;
-            case 'hours':
-                end.setHours(end.getHours() + value);
-                break;
-            case 'days':
-                end.setDate(end.getDate() + value);
-                break;
+       
+
+        //assume minutes default
+        let inMilliSeconds = value * 1000
+	
+        if (units == 'hours') inMilliSeconds = value * 60 * 1000;
+        else if (units == 'days') inMilliSeconds = value * 24 * 60 * 1000;
+
+        end.setTime(end.getTime() + inMilliSeconds);
         }
         
         document.getElementById('startDate').value = toLocalInputValue(now);
