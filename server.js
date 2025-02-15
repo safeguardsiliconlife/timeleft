@@ -14,7 +14,6 @@ const allowedIPs = [
 // Middleware to check if the client's IP is allowed
 const ipFilter = (req, res, next) => {
     let clientIP = req.ip || req.connection.remoteAddress;
-    console.log("Original clientIP", clientIP);
 
     // Convert IPv6 localhost to IPv4
     if (clientIP === '::1') {
@@ -24,8 +23,6 @@ const ipFilter = (req, res, next) => {
     else if (clientIP.substr(0, 7) === '::ffff:') {
         clientIP = clientIP.substr(7);
     }
-
-    console.log("Processed clientIP", clientIP);
 
     // Check if the IP is a valid IPv4 address
     if (!net.isIPv4(clientIP)) {
@@ -60,6 +57,15 @@ function ipToInt(ip) {
 
 // Apply IP filter middleware to all routes
 app.use(ipFilter);
+
+// Set correct MIME type for CSS files
+app.use('/css', (req, res, next) => {
+    res.type('text/css');
+    next();
+});
+
+// Serve static files from the 'public' directory
+app.use(express.static('public'));
 
 // Serve the HTML file for the clock
 app.get('/', (req, res) => {
