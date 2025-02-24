@@ -99,10 +99,17 @@
                     max="60" 
                     onchange="handleXMinutesChange()"
                 >
-                <span>minutes</span>
+                <span>minutes</span>              
             </div>
+            <button class="focus-mode-btn" onclick="toggleFocusMode()" title="Toggle focus mode">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+              </svg>
+              <span>Focus Mode</span>
+            </button>              
         </div>
         <div class="time-remaining" id="timeRemaining">Time remaining: calculating...</div>
+        <div class="end-time" id="endTime">End time: calculating...</div>
         <!-- Progress bar -->
         <div class="progress-bar">
             <div class="progress-fill" id="progressFill"></div>
@@ -298,7 +305,18 @@
 
         // Update time remaining display
         let timeRemainingElement = document.getElementById('timeRemaining');
+        let endTimeElement = document.getElementById('endTime');
         let remainingMs = endDate - now;
+        
+        // Format end time
+        const endTimeOptions = { 
+            weekday: 'short',
+            month: 'short', 
+            day: 'numeric',
+            hour: '2-digit', 
+            minute: '2-digit'
+        };
+        endTimeElement.textContent = `End time: ${endDate.toLocaleString([], endTimeOptions)}`;
         
         if (remainingMs <= 0) {
             timeRemainingElement.textContent = "Time's up!";
@@ -353,16 +371,19 @@
             let div = document.createElement('div');
             div.className = 'time-unit';
 
+            // Add time label
+            let label = document.createElement('div');
+            label.className = 'time-label';
+            label.textContent = formatTimeLabel(unitType, stepMs);
+            div.appendChild(label);
+
             // Determine past/current/future
             if (now >= unitEndTime) {
-                // It's entirely in the past
                 div.classList.add('past');
                 usedCount++;
             } else if (now < unitStartTime) {
-                // It's entirely in the future
                 div.classList.add('future');
             } else {
-                // Now is between unitStartTime and unitEndTime
                 div.classList.add('current');
                 // We can consider it partially used
             }
@@ -421,6 +442,59 @@
         let startStr = startTime.toLocaleString([], options);
         let endStr = endTime.toLocaleString([], options);
         return `${unitType} block:\n${startStr} to ${endStr}`;
+    }
+
+    // Add this new helper function
+    function formatTimeLabel(unitType, stepMs) {
+        switch(unitType) {
+            case 'minutes':
+                return '1m';
+            case 'fiveMinutes':
+                return '5m';
+            case 'tenMinutes':
+                return '10m';
+            case 'xMinutes':
+                return `${settings.xMinutesValue}m`;
+            case 'hours':
+                return '1h';
+            case 'days':
+                return '1d';
+            case 'weeks':
+                return '1w';
+            default:
+                return '';
+        }
+    }
+
+    let focusModeUnitsPerRow = 24; // Fewer units per row in focus mode
+    let normalModeUnitsPerRow = settings.unitsPerRow; // Store the normal mode value
+
+    function toggleFocusMode() {
+        const container = document.querySelector('.container');
+        const button = document.querySelector('.focus-mode-btn');
+        const isFocusMode = container.classList.toggle('focus-mode');
+        
+        if (isFocusMode) {
+            button.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 8V5a2 2 0 0 1 2-2h3m14 0h-3a2 2 0 0 0-2 2v3M3 16v3a2 2 0 0 0 2 2h3m14 0h-3a2 2 0 0 1-2-2v-3"/>
+                </svg>
+                <span>Exit Focus</span>
+            `;
+            normalModeUnitsPerRow = settings.unitsPerRow;
+            settings.unitsPerRow = focusModeUnitsPerRow;
+        } else {
+            button.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                </svg>
+                <span>Focus Mode</span>
+            `;
+            settings.unitsPerRow = normalModeUnitsPerRow;
+        }
+        
+        document.getElementById('unitsPerRow').textContent = settings.unitsPerRow;
+        updateVisualization();
     }
 </script>
 </body>

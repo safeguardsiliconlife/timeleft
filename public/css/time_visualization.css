@@ -72,6 +72,13 @@ button:hover {
     color: #4CAF50;
 }
 
+.end-time {
+    font-size: 18px;
+    text-align: center;
+    margin-bottom: 20px;
+    color: #888;
+}
+
 .time-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(20px, 1fr));
@@ -225,4 +232,96 @@ button:hover {
 #xMinutesInput span {
     margin-left: 5px;
     color: #fff;
+}
+
+.focus-mode-btn {
+    float: right;
+    top: 10px;
+    right: 10px;
+    padding: 8px 12px;
+    background: #444;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.focus-mode-btn:hover {
+    background: #555;
+}
+
+.focus-mode-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Add styles for focus mode */
+.container.focus-mode .controls,
+.container.focus-mode .quick-setup,
+.container.focus-mode .stats,
+.container.focus-mode .switch-view-btn,
+.container.focus-mode .clear-local-storage-btn {
+    display: none;
+}
+
+.container.focus-mode .visualization-container {
+    margin-top: 0;
+    min-height: 100vh;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.container.focus-mode .time-grid {
+    gap: 4px;
+    padding: 20px;
+    grid-template-columns: repeat(24, 1fr);
+}
+
+.container.focus-mode .time-unit {
+    aspect-ratio: 1;
+    height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    position: relative;
+}
+
+.container.focus-mode .time-unit .time-label {
+    color: rgba(255, 255, 255, 0.8);
+    text-align: center;
+    position: absolute;
+    width: 100%;
+    padding: 2px;
+    word-break: break-word;
+}
+
+/* Adjust colors for better readability in focus mode */
+.container.focus-mode .time-unit.past .time-label {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.container.focus-mode .time-unit.current .time-label {
+    color: white;
+    font-weight: bold;
+}
+
+.container.focus-mode .time-unit.future .time-label {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Make the grid take up available space */
+.container.focus-mode .time-grid {
+    flex: 1;
+    margin: 20px 0;
+}
+
+/* Adjust spacing in focus mode */
+.container.focus-mode .end-time {
+    font-size: 16px;
+    margin-bottom: 15px;
 }

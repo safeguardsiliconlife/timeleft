@@ -11,6 +11,9 @@ const allowedIPs = [
     '127.0.0.1',
 ];
 
+
+
+
 // Middleware to check if the client's IP is allowed
 const ipFilter = (req, res, next) => {
     let clientIP = req.ip || req.connection.remoteAddress;
